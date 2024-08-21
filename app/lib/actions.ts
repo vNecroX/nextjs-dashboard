@@ -5,7 +5,6 @@ import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
-import { AuthError } from 'next-auth';
 
 const FormSchema = z.object({
   id: z.string(),
@@ -119,15 +118,10 @@ export async function updateInvoice(
     formData: FormData,
   ) {
     try {
-      await signIn('credentials', formData);
+      await signIn('credentials', Object.fromEntries(formData));
     } catch (error) {
-      if (error instanceof AuthError) {
-        switch (error.type) {
-          case 'CredentialsSignin':
-            return 'Invalid credentials.';
-          default:
-            return 'Something went wrong.';
-        }
+      if ((error as Error).message.includes('CredentialsSignin')) {
+        return 'CredentialSignin';
       }
       throw error;
     }
